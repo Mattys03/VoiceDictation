@@ -9,6 +9,7 @@
 ![Platform](https://img.shields.io/badge/Plataforma-Windows-blue)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-green)
 ![License](https://img.shields.io/badge/Licen%C3%A7a-MIT-purple)
+[![VoiceDictation CI](https://github.com/Mattys03/VoiceDictation/actions/workflows/python-app.yml/badge.svg)](https://github.com/Mattys03/VoiceDictation/actions/workflows/python-app.yml)
 
 **VoiceDictation** é um utilitário desenvolvido em Python que utiliza a API de Reconhecimento de Voz do Google (Speech Recognition) para transcrever áudio em tempo real e digitar automaticamente em qualquer janela ativa do Windows.
 
