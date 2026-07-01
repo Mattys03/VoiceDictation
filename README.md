@@ -18,7 +18,10 @@
 
 Confira o **Voice Detection Transcribe** em ação. O vídeo abaixo demonstra a captação de áudio, a digitação dinâmica e o painel de configurações:
 
-https://github.com/Mattys03/VoiceDictation/raw/master/assets/demo_video.mp4
+https://github.com/Mattys03/VoiceDictation/assets/demo_video.mp4
+
+*(Caso o player não carregue automaticamente acima, utilize a tag de vídeo nativa abaixo)*
+<video src="https://raw.githubusercontent.com/Mattys03/VoiceDictation/master/assets/demo_video.mp4" controls width="800"></video>
 
 ### 📸 Imagens do Sistema
 
