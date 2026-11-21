@@ -186,14 +186,14 @@ static LRESULT CALLBACK popup_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
 
     switch (msg) {
         case WM_ACTIVATE:
-            if (LOWORD(wp) == WA_INACTIVE) {
+            if (LOWORD(wp) == WA_INACTIVE && !st->done) {
                 st->chosen_id = -1;
                 mark_closed(st);
             }
             return 0;
 
         case WM_KEYDOWN:
-            if (wp == VK_ESCAPE) {
+            if (wp == VK_ESCAPE && !st->done) {
                 st->chosen_id = -1;
                 mark_closed(st);
                 return 0;
@@ -252,6 +252,7 @@ static LRESULT CALLBACK popup_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
         }
 
         case WM_LBUTTONUP: {
+            if (st->done) return 0;
             int x = (int)(short)LOWORD(lp);
             int y = (int)(short)HIWORD(lp);
             if (x < 0 || x >= st->w || y < 0 || y >= st->h) {
@@ -277,8 +278,10 @@ static LRESULT CALLBACK popup_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
         }
 
         case WM_RBUTTONDOWN:
-            st->chosen_id = -1;
-            mark_closed(st);
+            if (!st->done) {
+                st->chosen_id = -1;
+                mark_closed(st);
+            }
             return 0;
     }
     return DefWindowProcW(hwnd, msg, wp, lp);

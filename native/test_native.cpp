@@ -294,6 +294,23 @@ static int test_popup_toggle_and_cooldown() {
     // Different tag ("lang") right after closing "history" is allowed cleanly
     CHECK(!popup_card::check_toggle_or_dismiss("lang", &deferred));
 
+    // Clicking popup item 0 ("Google (Gratuito)") must return id 0 (never -1 during DestroyWindow WM_ACTIVATE!)
+    UINT_PTR click_tid = SetTimer(nullptr, 0, 50, [](HWND, UINT, UINT_PTR, DWORD) {
+        HWND pw = FindWindowW(L"VoiceDictationCustomMenu", nullptr);
+        if (pw) {
+            SendMessageW(pw, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(60, 24));
+            SendMessageW(pw, WM_LBUTTONUP, 0, MAKELPARAM(60, 24));
+        }
+    });
+    std::vector<popup_card::PopupItem> engines = {
+        { 0, L"Google (Gratuito)", false, false, false },
+        { 1, L"Groq (Whisper API)", true, false, false },
+    };
+    int eng_res = popup_card::show_popup_menu(nullptr, 120, 120, engines, theme::get_palette("dark"), 240, "test_eng");
+    KillTimer(nullptr, click_tid);
+    CHECK(eng_res == 0);
+    CHECK(!popup_card::is_popup_open());
+
     Gdiplus::GdiplusShutdown(gt);
     return 0;
 }
