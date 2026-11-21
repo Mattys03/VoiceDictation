@@ -1,9 +1,11 @@
 {
-  "hotkey": "Alt+H",
-  "microphone_index": 1,
-  "microphone_name": "Default Microphone",
-  "language": "pt-BR",
-  "auto_punctuation": true,
-  "engine": "Groq (Whisper API)",
-  "groq_api_key": "YOUR_GROQ_API_KEY_HERE"
+    "hotkey": "Alt+H",
+    "microphone_index": null,
+    "microphone_name": "",
+    "language": "auto",
+    "auto_punctuation": true,
+    "engine": "Google (Gratuito)",
+    "groq_api_key": "",
+    "theme": "dark",
+    "auto_start": false
 }

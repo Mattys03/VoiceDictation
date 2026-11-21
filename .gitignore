@@ -49,3 +49,13 @@ config.json
 
 # VS Code
 .vscode/
+
+# Native C++ build artifacts & local launchers
+*.exe
+*.obj
+*.pdb
+launch_err.log
+MOVIDO_PARA_O_SSD.txt
+*_ANTIGO_NAO_USAR*
+
+voice_dictation.log.*
