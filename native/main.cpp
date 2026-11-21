@@ -44,6 +44,7 @@ constexpr UINT WM_APP_ADOPT_MIC = WM_APP + 7;
 constexpr UINT WM_APP_DEFERRED_HISTORY = WM_APP + 8;
 constexpr UINT WM_APP_DEFERRED_LANG = WM_APP + 9;
 constexpr UINT WM_APP_CLOSE_SETTINGS = WM_APP + 10;
+constexpr UINT WM_APP_WORKER_STATUS = WM_APP + 11;
 
 constexpr UINT_PTR TIMER_ANIM = 10;
 constexpr UINT_PTR TIMER_FOCUS_STATUS = 11;
@@ -617,7 +618,8 @@ private:
         const size_t pcm_bytes = total_samples * sizeof(int16_t);
         std::string lang_code = text_proc::whisper_language_code(job.cfg.language);
 
-        if (job.cfg.engine == "Groq (Whisper API)" && !job.cfg.groq_api_key.empty()) {
+        bool has_groq = (job.cfg.engine == "Groq (Whisper API)" && !job.cfg.groq_api_key.empty());
+        if (has_groq) {
             // Chunk at ~20MB (~10.4 min mono 16kHz) cleanly under Groq 25MB limit
             constexpr size_t kMaxChunkSamples = 10u * 1024u * 1024u;
             std::string full;
@@ -636,11 +638,6 @@ private:
                 if (part.empty() && !err.empty()) {
                     LOGE("[!] Groq Whisper erro: %s", err.c_str());
                 } else if (!part.empty()) {
-                    if (job.cfg.language == "translate_en") {
-                        part = m_http.translate_groq(job.cfg.groq_api_key, part, "English");
-                    } else if (job.cfg.language == "translate_es") {
-                        part = m_http.translate_groq(job.cfg.groq_api_key, part, "Spanish");
-                    }
                     if (!full.empty()) full += " ";
                     full += part;
                 }
@@ -669,16 +666,47 @@ private:
             }
         }
 
-        // Release PCM audio immediately before paste
+        // Release PCM audio immediately before LLM review / paste
         cap.pcm16.clear();
         cap.pcm16.shrink_to_fit();
 
         bool caps_on = (GetKeyState(VK_CAPITAL) & 1) != 0;
         std::string blocked;
-        std::string final_text = text_proc::filter_and_format_transcription(
-            raw_text, pcm_bytes, cap.sample_rate, cap.peak,
-            job.cfg.auto_punctuation, caps_on, &blocked
+        std::string cleaned_raw = text_proc::filter_raw_speech(
+            raw_text, pcm_bytes, cap.sample_rate, cap.peak, &blocked
         );
+
+        std::string final_text;
+        if (!cleaned_raw.empty()) {
+            bool reviewed = false;
+            if (has_groq && job.cfg.smart_review) {
+                auto* st = new std::string("Revisando...");
+                if (!PostMessageW(m_hwnd, WM_APP_WORKER_STATUS, (WPARAM)job.session_id, (LPARAM)st)) {
+                    delete st;
+                }
+                std::string input_rev = job.cfg.allow_ellipsis
+                    ? cleaned_raw
+                    : wide_to_utf8(text_proc::remove_ellipsis_w(utf8_to_wide(cleaned_raw)));
+                std::string rev_out = m_http.review_groq(
+                    job.cfg.groq_api_key, input_rev.empty() ? cleaned_raw : input_rev, job.cfg.allow_ellipsis
+                );
+                if (!rev_out.empty()) {
+                    reviewed = (rev_out != input_rev);
+                    cleaned_raw = std::move(rev_out);
+                }
+            }
+            if (has_groq && (job.cfg.language == "translate_en" || job.cfg.language == "translate_es")) {
+                auto* st = new std::string("Traduzindo...");
+                if (!PostMessageW(m_hwnd, WM_APP_WORKER_STATUS, (WPARAM)job.session_id, (LPARAM)st)) {
+                    delete st;
+                }
+                const std::string target_lang = (job.cfg.language == "translate_en") ? "English" : "Spanish";
+                cleaned_raw = m_http.translate_groq(job.cfg.groq_api_key, cleaned_raw, target_lang);
+            }
+            final_text = text_proc::finalize_transcription(
+                cleaned_raw, job.cfg.auto_punctuation, job.cfg.allow_ellipsis, caps_on, reviewed
+            );
+        }
 
         auto* res = new JobDoneMsg();
         res->session_id = job.session_id;
@@ -1176,6 +1204,14 @@ private:
             case WM_APP_AUDIO_STATUS: {
                 std::unique_ptr<std::string> st((std::string*)lp);
                 if (st && (uint64_t)wp == m_session_id && m_is_listening) {
+                    set_status(*st);
+                }
+                return 0;
+            }
+
+            case WM_APP_WORKER_STATUS: {
+                std::unique_ptr<std::string> st((std::string*)lp);
+                if (st && (uint64_t)wp == m_session_id && m_is_processing) {
                     set_status(*st);
                 }
                 return 0;

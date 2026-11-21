@@ -45,6 +45,8 @@ struct AppSettings {
     std::string microphone_name;
     std::string language = "auto";
     bool auto_punctuation = true;
+    bool allow_ellipsis = true;
+    bool smart_review = false;
     std::string engine = "Google (Gratuito)";
     std::string groq_api_key;
     std::string theme = "dark"; // "dark" | "light"

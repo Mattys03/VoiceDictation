@@ -28,6 +28,8 @@ private:
         EyeBtn,
         LangDropdown,
         PunctToggle,
+        EllipsisToggle,
+        ReviewToggle,
         AutoStartToggle,
         ThemeDarkBtn,
         ThemeLightBtn
@@ -66,7 +68,7 @@ private:
     OnSaveCallback m_on_save;
     float m_scale = 1.0f;
     int m_win_w = 396;
-    int m_win_h = 604;
+    int m_win_h = 594;
 
     HFONT m_font_edit = nullptr;
     HBRUSH m_br_bg = nullptr;
@@ -87,6 +89,8 @@ private:
     Gdiplus::RectF m_rc_btn_eye;
     Gdiplus::RectF m_rc_cb_lang;
     Gdiplus::RectF m_rc_punct_row;
+    Gdiplus::RectF m_rc_ellipsis_row;
+    Gdiplus::RectF m_rc_review_row;
     Gdiplus::RectF m_rc_autostart_row;
     Gdiplus::RectF m_rc_theme_dark;
     Gdiplus::RectF m_rc_theme_light;

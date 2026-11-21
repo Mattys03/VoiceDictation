@@ -16,6 +16,8 @@ DEFAULT_SETTINGS = {
     "microphone_name": "",
     "language": "auto",
     "auto_punctuation": True,
+    "allow_ellipsis": True,
+    "smart_review": False,
     "engine": "Google (Gratuito)",
     "groq_api_key": "",
     "theme": "dark",

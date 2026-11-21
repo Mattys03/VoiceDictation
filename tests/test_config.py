@@ -23,6 +23,8 @@ class ConfigStructureTest(unittest.TestCase):
         self.assertEqual(config.get("groq_api_key", ""), "")
         self.assertEqual(config.get("theme"), "dark")
         self.assertIs(config.get("auto_start"), False)
+        self.assertIs(config.get("allow_ellipsis"), True)
+        self.assertIs(config.get("smart_review"), False)
 
     def test_loopback_devices_are_detected(self):
         self.assertTrue(is_loopback_device("CABLE Output (VB-Audio Virtual Cable)"))

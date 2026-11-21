@@ -30,6 +30,8 @@ static int test_json_and_config() {
     CHECK(def_s.theme == "dark");
     CHECK(def_s.auto_start == false);
     CHECK(def_s.has_auto_start_pref == false);
+    CHECK(def_s.allow_ellipsis == true);
+    CHECK(def_s.smart_review == false);
 
     AppSettings s;
     s.hotkey = "Ctrl+Shift+H";
@@ -37,6 +39,8 @@ static int test_json_and_config() {
     s.microphone_name = "Microfone (4- fifine Microphone";
     s.language = "pt-BR";
     s.auto_punctuation = true;
+    s.allow_ellipsis = false;
+    s.smart_review = true;
     s.engine = "Groq (Whisper API)";
     s.groq_api_key = "gsk_test_123\"quote";
     s.theme = "light";
@@ -47,6 +51,8 @@ static int test_json_and_config() {
     CHECK(dumped.find("\"microphone_index\": null") != std::string::npos);
     CHECK(dumped.find("\"theme\": \"light\"") != std::string::npos);
     CHECK(dumped.find("\"auto_start\": true") != std::string::npos);
+    CHECK(dumped.find("\"allow_ellipsis\": false") != std::string::npos);
+    CHECK(dumped.find("\"smart_review\": true") != std::string::npos);
 
     AppSettings parsed = json_util::parse_settings_json(dumped);
     CHECK(parsed.hotkey == s.hotkey);
@@ -54,6 +60,8 @@ static int test_json_and_config() {
     CHECK(parsed.microphone_name == s.microphone_name);
     CHECK(parsed.language == "pt-BR");
     CHECK(parsed.auto_punctuation == true);
+    CHECK(parsed.allow_ellipsis == false);
+    CHECK(parsed.smart_review == true);
     CHECK(parsed.engine == "Groq (Whisper API)");
     CHECK(parsed.groq_api_key == s.groq_api_key);
     CHECK(parsed.theme == "light");
@@ -173,6 +181,25 @@ static int test_text_processing() {
     );
     CHECK(blocked.empty());
     CHECK(r_ok == "Eu quero testar isso.");
+
+    // Ellipsis disabled: strips ... and Unicode ellipsis cleanly while preserving decimals
+    blocked.clear();
+    std::string r_no_dots = filter_and_format_transcription(
+        "eu... eu quero v2.0 sem isso... tudo bem\xE2\x80\xA6",
+        64000, 16000, 5000, true, false, &blocked, false, false
+    );
+    CHECK(blocked.empty());
+    CHECK(r_no_dots.find("...") == std::string::npos);
+    CHECK(r_no_dots.find("\xE2\x80\xA6") == std::string::npos);
+    CHECK(r_no_dots == "Eu quero v2.0 sem isso tudo bem.");
+
+    // Mid-sentence ellipsis + exclamation + no auto_punctuation
+    std::string r_no_dots_raw = finalize_transcription("oi... tudo bem...!", false, false, false, false);
+    CHECK(r_no_dots_raw == "oi tudo bem!");
+
+    // Smart review path avoids regex comma insertion around "sabe" and strips ellipsis if disabled
+    std::string r_rev = finalize_transcription("Ele sabe como fazer...", true, false, false, true);
+    CHECK(r_rev == "Ele sabe como fazer.");
     return 0;
 }
 

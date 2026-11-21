@@ -26,6 +26,12 @@ public:
         const std::string& target_language_name
     );
 
+    std::string review_groq(
+        const std::string& api_key,
+        const std::string& text,
+        bool allow_ellipsis
+    );
+
     std::string transcribe_google_flac(
         const uint8_t* flac_data,
         size_t flac_size,
@@ -35,6 +41,15 @@ public:
     );
 
 private:
+    std::string groq_chat(
+        const std::string& api_key,
+        const std::string& sys_prompt,
+        const std::string& user_content,
+        const char* const* models,
+        size_t model_count,
+        double temperature,
+        const char* tag
+    );
     HINTERNET ensure_session();
     bool do_request(
         const wchar_t* host,

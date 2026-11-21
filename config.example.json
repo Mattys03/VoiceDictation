@@ -4,6 +4,8 @@
     "microphone_name": "",
     "language": "auto",
     "auto_punctuation": true,
+    "allow_ellipsis": true,
+    "smart_review": false,
     "engine": "Google (Gratuito)",
     "groq_api_key": "",
     "theme": "dark",

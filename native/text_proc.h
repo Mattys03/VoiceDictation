@@ -226,8 +226,13 @@ inline std::string auto_punctuate(const std::string& utf8_text) {
             text[i] = (wchar_t)(uintptr_t)CharUpperW((LPWSTR)(uintptr_t)ch);
             capitalize_next = false;
         }
-        if (ch == L'.' || ch == L'!' || ch == L'?' || ch == L'\n') {
+        if (ch == L'!' || ch == L'?' || ch == L'\n') {
             capitalize_next = true;
+        } else if (ch == L'.') {
+            bool dot_inside_token =
+                (i > 0 && IsCharAlphaNumericW(text[i - 1]) &&
+                 i + 1 < text.size() && IsCharAlphaNumericW(text[i + 1]));
+            if (!dot_inside_token) capitalize_next = true;
         }
     }
 
@@ -239,13 +244,57 @@ inline std::string auto_punctuate(const std::string& utf8_text) {
     return wide_to_utf8(text);
 }
 
-inline std::string filter_and_format_transcription(
+inline std::wstring remove_ellipsis_w(const std::wstring& s) {
+    std::wstring out;
+    out.reserve(s.size());
+    size_t i = 0;
+    const size_t n = s.size();
+    while (i < n) {
+        bool is_ellip = (s[i] == L'\u2026') ||
+                        (s[i] == L'.' && i + 1 < n && s[i + 1] == L'.');
+        if (is_ellip) {
+            while (i < n && (s[i] == L'.' || s[i] == L'\u2026')) ++i;
+            bool had_left_ws = !out.empty() &&
+                               (out.back() == L' ' || out.back() == L'\t');
+            size_t j = i;
+            while (j < n && (s[j] == L' ' || s[j] == L'\t')) ++j;
+            bool had_right_ws = (j > i);
+            i = j;
+
+            bool at_end = (i >= n);
+            bool next_punct = !at_end && wcschr(L".,;:!?)]\r\n", s[i]) != nullptr;
+            bool next_open_punct = out.empty() || wcschr(L"(\r\n", out.back()) != nullptr;
+
+            if (at_end || next_punct || next_open_punct) {
+                while (!out.empty() && (out.back() == L' ' || out.back() == L'\t')) {
+                    out.pop_back();
+                }
+            } else if (!had_left_ws && !had_right_ws) {
+                out.push_back(L' ');
+            } else if (!had_left_ws && had_right_ws) {
+                out.push_back(L' ');
+            }
+            continue;
+        }
+        wchar_t ch = s[i++];
+        if (wcschr(L",.;:!?", ch) != nullptr) {
+            while (!out.empty() && (out.back() == L' ' || out.back() == L'\t')) {
+                out.pop_back();
+            }
+        }
+        if ((ch == L' ' || ch == L'\t') && !out.empty() && out.back() == L' ') {
+            continue;
+        }
+        out.push_back(ch);
+    }
+    return wtrim(out);
+}
+
+inline std::string filter_raw_speech(
     const std::string& raw_utf8,
     size_t audio_bytes,
     uint32_t sample_rate,
     int speech_peak,
-    bool use_auto_punctuation,
-    bool capslock_on,
     std::string* blocked_reason = nullptr
 ) {
     std::wstring text = wtrim(utf8_to_wide(raw_utf8));
@@ -317,32 +366,82 @@ inline std::string filter_and_format_transcription(
         if (blocked_reason) *blocked_reason = wide_to_utf8(text);
         return {};
     }
+    return wide_to_utf8(text);
+}
 
-    // Case-insensitive adjacent duplicate word removal
-    std::vector<std::wstring> words = split_ws_w(text);
-    std::vector<std::wstring> deduped;
-    std::wstring prev_low;
-    for (const auto& w : words) {
-        std::wstring wl = wlower(w);
-        if (deduped.empty() || wl != prev_low) {
-            deduped.push_back(w);
-            prev_low = wl;
+inline std::string finalize_transcription(
+    const std::string& raw_utf8,
+    bool use_auto_punctuation,
+    bool allow_ellipsis,
+    bool capslock_on,
+    bool from_smart_review = false
+) {
+    std::wstring text = wtrim(utf8_to_wide(raw_utf8));
+    if (text.empty()) return {};
+
+    if (!allow_ellipsis) {
+        text = remove_ellipsis_w(text);
+        if (text.empty()) return {};
+    }
+
+    std::string out;
+    if (from_smart_review) {
+        if (use_auto_punctuation) {
+            if (IsCharAlphaW(text[0])) {
+                text[0] = (wchar_t)(uintptr_t)CharUpperW((LPWSTR)(uintptr_t)text[0]);
+            }
+            text = wrstrip(text);
+            if (!text.empty() && wcschr(L".!?;:\u2026", text.back()) == nullptr) {
+                text.push_back(L'.');
+            }
+        }
+        out = wide_to_utf8(text);
+    } else {
+        // Case-insensitive adjacent duplicate word removal
+        std::vector<std::wstring> words = split_ws_w(text);
+        std::vector<std::wstring> deduped;
+        std::wstring prev_low;
+        for (const auto& w : words) {
+            std::wstring wl = wlower(w);
+            if (deduped.empty() || wl != prev_low) {
+                deduped.push_back(w);
+                prev_low = wl;
+            }
+        }
+        std::wstring joined;
+        for (size_t i = 0; i < deduped.size(); ++i) {
+            if (i > 0) joined.push_back(L' ');
+            joined += deduped[i];
+        }
+        out = wide_to_utf8(joined);
+        if (use_auto_punctuation) {
+            out = auto_punctuate(out);
+            if (!allow_ellipsis) {
+                out = wide_to_utf8(remove_ellipsis_w(utf8_to_wide(out)));
+            }
         }
     }
-    std::wstring joined;
-    for (size_t i = 0; i < deduped.size(); ++i) {
-        if (i > 0) joined.push_back(L' ');
-        joined += deduped[i];
-    }
 
-    std::string out = wide_to_utf8(joined);
-    if (use_auto_punctuation) {
-        out = auto_punctuate(out);
-    }
     if (capslock_on) {
         out = utf8_upper(out);
     }
     return out;
+}
+
+inline std::string filter_and_format_transcription(
+    const std::string& raw_utf8,
+    size_t audio_bytes,
+    uint32_t sample_rate,
+    int speech_peak,
+    bool use_auto_punctuation,
+    bool capslock_on,
+    std::string* blocked_reason = nullptr,
+    bool allow_ellipsis = true,
+    bool from_smart_review = false
+) {
+    std::string filtered = filter_raw_speech(raw_utf8, audio_bytes, sample_rate, speech_peak, blocked_reason);
+    if (filtered.empty()) return {};
+    return finalize_transcription(filtered, use_auto_punctuation, allow_ellipsis, capslock_on, from_smart_review);
 }
 
 } // namespace text_proc

@@ -110,7 +110,7 @@ void SettingsWindow::show(HWND parent_hwnd, const AppSettings& current_cfg, OnSa
 
     m_win_w = (int)std::lround(396.0f * m_scale);
     bool is_groq = (m_cfg.engine == "Groq (Whisper API)");
-    m_win_h = (int)std::lround((is_groq ? 604.0f : 556.0f) * m_scale);
+    m_win_h = (int)std::lround((is_groq ? 594.0f : 550.0f) * m_scale);
 
     RECT wa{};
     SystemParametersInfoW(SPI_GETWORKAREA, 0, &wa, 0);
@@ -160,42 +160,44 @@ void SettingsWindow::close() {
 
 void SettingsWindow::update_layout() {
     bool is_groq = (m_cfg.engine == "Groq (Whisper API)");
-    float target_h_dp = is_groq ? 604.0f : 556.0f;
+    float target_h_dp = is_groq ? 594.0f : 550.0f;
     m_win_w = (int)std::lround(396.0f * m_scale);
     m_win_h = (int)std::lround(target_h_dp * m_scale);
 
-    m_rc_close = { 354.0f, 9.0f, 30.0f, 26.0f };
+    m_rc_close = { 354.0f, 8.0f, 30.0f, 26.0f };
 
-    float y = 56.0f;
-    // Card 1: Hotkey (height 74)
-    m_rc_btn_hk = { 286.0f, y + 32.0f, 80.0f, 32.0f };
-    y += 84.0f;
+    float y = 50.0f;
+    // Card 1: Hotkey (height 66)
+    m_rc_btn_hk = { 286.0f, y + 27.0f, 80.0f, 30.0f };
+    y += 74.0f;
 
-    // Card 2: Mic (height 74)
-    m_rc_cb_mic = { 30.0f, y + 32.0f, 336.0f, 34.0f };
-    y += 84.0f;
+    // Card 2: Mic (height 66)
+    m_rc_cb_mic = { 30.0f, y + 26.0f, 336.0f, 32.0f };
+    y += 74.0f;
 
-    // Card 3: Engine & Key (height 122 if Groq else 74)
-    m_rc_cb_eng = { 30.0f, y + 32.0f, 336.0f, 34.0f };
+    // Card 3: Engine & Key (height 110 if Groq else 66)
+    m_rc_cb_eng = { 30.0f, y + 26.0f, 336.0f, 32.0f };
     if (is_groq) {
-        m_rc_key_box = { 112.0f, y + 76.0f, 198.0f, 32.0f };
-        m_rc_btn_eye = { 316.0f, y + 76.0f, 50.0f, 32.0f };
-        y += 132.0f;
+        m_rc_key_box = { 112.0f, y + 68.0f, 198.0f, 30.0f };
+        m_rc_btn_eye = { 316.0f, y + 68.0f, 50.0f, 30.0f };
+        y += 118.0f;
     } else {
         m_rc_key_box = {};
         m_rc_btn_eye = {};
-        y += 84.0f;
+        y += 74.0f;
     }
 
-    // Card 4: Language (height 74)
-    m_rc_cb_lang = { 30.0f, y + 32.0f, 336.0f, 34.0f };
-    y += 84.0f;
+    // Card 4: Language (height 66)
+    m_rc_cb_lang = { 30.0f, y + 26.0f, 336.0f, 32.0f };
+    y += 74.0f;
 
-    // Card 5: Preferences & Theme (height 132)
-    m_rc_punct_row = { 30.0f, y + 10.0f, 336.0f, 34.0f };
-    m_rc_autostart_row = { 30.0f, y + 51.0f, 336.0f, 34.0f };
-    m_rc_theme_dark = { 196.0f, y + 93.0f, 82.0f, 28.0f };
-    m_rc_theme_light = { 284.0f, y + 93.0f, 82.0f, 28.0f };
+    // Card 5: Preferences & Theme (height 178)
+    m_rc_punct_row = { 30.0f, y + 6.0f, 336.0f, 30.0f };
+    m_rc_ellipsis_row = { 30.0f, y + 40.0f, 336.0f, 30.0f };
+    m_rc_review_row = { 30.0f, y + 74.0f, 336.0f, 30.0f };
+    m_rc_autostart_row = { 30.0f, y + 108.0f, 336.0f, 30.0f };
+    m_rc_theme_dark = { 196.0f, y + 144.0f, 82.0f, 28.0f };
+    m_rc_theme_light = { 284.0f, y + 144.0f, 82.0f, 28.0f };
 
     if (m_hwnd && IsWindow(m_hwnd)) {
         RECT cur{};
@@ -206,7 +208,7 @@ void SettingsWindow::update_layout() {
         if (m_edit_key && IsWindow(m_edit_key)) {
             if (is_groq) {
                 int ex = (int)std::lround((m_rc_key_box.X + 8.0f) * m_scale);
-                int ey = (int)std::lround((m_rc_key_box.Y + 7.0f) * m_scale);
+                int ey = (int)std::lround((m_rc_key_box.Y + 6.0f) * m_scale);
                 int ew = (int)std::lround((m_rc_key_box.Width - 16.0f) * m_scale);
                 int eh = (int)std::lround(18.0f * m_scale);
                 SetWindowPos(m_edit_key, nullptr, ex, ey, ew, eh, SWP_NOZORDER | SWP_SHOWWINDOW);
@@ -221,13 +223,15 @@ SettingsWindow::HitId SettingsWindow::hit_test(int px, int py) const {
     float x = (float)px / m_scale;
     float y = (float)py / m_scale;
     if (pt_in(m_rc_close, x, y)) return HitId::CloseBtn;
-    if (y < 44.0f) return HitId::TitleBar;
+    if (y < 42.0f) return HitId::TitleBar;
     if (pt_in(m_rc_btn_hk, x, y)) return HitId::RecordHotkeyBtn;
     if (pt_in(m_rc_cb_mic, x, y)) return HitId::MicDropdown;
     if (pt_in(m_rc_cb_eng, x, y)) return HitId::EngineDropdown;
     if (m_cfg.engine == "Groq (Whisper API)" && pt_in(m_rc_btn_eye, x, y)) return HitId::EyeBtn;
     if (pt_in(m_rc_cb_lang, x, y)) return HitId::LangDropdown;
     if (pt_in(m_rc_punct_row, x, y)) return HitId::PunctToggle;
+    if (pt_in(m_rc_ellipsis_row, x, y)) return HitId::EllipsisToggle;
+    if (pt_in(m_rc_review_row, x, y)) return HitId::ReviewToggle;
     if (pt_in(m_rc_autostart_row, x, y)) return HitId::AutoStartToggle;
     if (pt_in(m_rc_theme_dark, x, y)) return HitId::ThemeDarkBtn;
     if (pt_in(m_rc_theme_light, x, y)) return HitId::ThemeLightBtn;
@@ -263,9 +267,9 @@ void SettingsWindow::paint_window(HDC target_dc) {
 
     // Header strip
     Gdiplus::SolidBrush br_hdr(theme::gcol(pal.card_bg));
-    g.FillRectangle(&br_hdr, 1.0f, 1.0f, (float)m_win_w - 2.0f, 44.0f * s);
+    g.FillRectangle(&br_hdr, 1.0f, 1.0f, (float)m_win_w - 2.0f, 42.0f * s);
     Gdiplus::Pen pen_sep(theme::gcol(pal.border_subtle), 1.0f * s);
-    g.DrawLine(&pen_sep, 0.0f, 44.0f * s, (float)m_win_w, 44.0f * s);
+    g.DrawLine(&pen_sep, 0.0f, 42.0f * s, (float)m_win_w, 42.0f * s);
 
     Gdiplus::FontFamily ff(L"Segoe UI");
     Gdiplus::FontFamily ff_mono(L"Consolas");
@@ -297,8 +301,8 @@ void SettingsWindow::paint_window(HDC target_dc) {
     Gdiplus::Pen pen_input(theme::gcol(pal.border), 1.0f * s);
 
     // Header dot + title + close X
-    g.FillEllipse(&br_green, 18.0f * s, 17.5f * s, 9.0f * s, 9.0f * s);
-    g.DrawString(L"Configura\u00E7\u00F5es", -1, &f_title, rdp(34.0f, 1.0f, 240.0f, 43.0f), &sf_left, &br_txt);
+    g.FillEllipse(&br_green, 18.0f * s, 16.5f * s, 9.0f * s, 9.0f * s);
+    g.DrawString(L"Configura\u00E7\u00F5es", -1, &f_title, rdp(34.0f, 1.0f, 240.0f, 41.0f), &sf_left, &br_txt);
 
     {
         Gdiplus::GraphicsPath cp;
@@ -317,7 +321,7 @@ void SettingsWindow::paint_window(HDC target_dc) {
         theme::add_round_rect_path(p, 16.0f * s, y_dp * s, 364.0f * s, h_dp * s, 12.0f * s);
         g.FillPath(&br_card, &p);
         g.DrawPath(&pen_card, &p);
-        g.DrawString(label, -1, &f_sec, rdp(30.0f, y_dp + 10.0f, 300.0f, 16.0f), &sf_left, &br_muted);
+        g.DrawString(label, -1, &f_sec, rdp(30.0f, y_dp + 7.0f, 300.0f, 16.0f), &sf_left, &br_muted);
     };
 
     auto draw_pill_btn = [&](const Gdiplus::RectF& rc, const wchar_t* text, HitId id, bool active = false) {
@@ -342,67 +346,67 @@ void SettingsWindow::paint_window(HDC target_dc) {
         draw_chevron(g, (rc.X + rc.Width - 16.0f) * s, (rc.Y + rc.Height * 0.5f) * s, s, pal.text_muted);
     };
 
-    float y = 56.0f;
+    float y = 50.0f;
 
     // 1. Hotkey card
-    draw_card(y, 74.0f, L"ATALHO GLOBAL");
+    draw_card(y, 66.0f, L"ATALHO GLOBAL");
     {
         Gdiplus::GraphicsPath kp;
-        theme::add_round_rect_path(kp, 30.0f * s, (y + 32.0f) * s, 248.0f * s, 32.0f * s, 8.0f * s);
+        theme::add_round_rect_path(kp, 30.0f * s, (y + 27.0f) * s, 248.0f * s, 30.0f * s, 8.0f * s);
         g.FillPath(&br_input, &kp);
         g.DrawPath(&pen_input, &kp);
         std::wstring hk_txt = m_capturing_hotkey
             ? utf8_to_wide(m_hotkey_preview.empty() ? "Pressione..." : m_hotkey_preview)
             : utf8_to_wide(m_cfg.hotkey);
         g.DrawString(hk_txt.c_str(), -1, &f_hk,
-                     rdp(42.0f, y + 32.0f, 224.0f, 32.0f), &sf_left,
+                     rdp(42.0f, y + 27.0f, 224.0f, 30.0f), &sf_left,
                      m_capturing_hotkey ? &br_amber : &br_green);
         draw_pill_btn(m_rc_btn_hk, m_capturing_hotkey ? L"..." : L"Gravar", HitId::RecordHotkeyBtn, m_capturing_hotkey);
     }
-    y += 84.0f;
+    y += 74.0f;
 
     // 2. Microphone card
-    draw_card(y, 74.0f, L"MICROFONE");
+    draw_card(y, 66.0f, L"MICROFONE");
     {
         std::wstring mic_disp = m_cfg.microphone_name.empty()
             ? L"Padr\u00E3o do Sistema"
             : utf8_to_wide(m_cfg.microphone_name);
         draw_dropdown(m_rc_cb_mic, mic_disp, HitId::MicDropdown);
     }
-    y += 84.0f;
+    y += 74.0f;
 
     // 3. Engine & Groq key card
-    draw_card(y, is_groq ? 122.0f : 74.0f, L"MOTOR DE TRANSCRI\u00C7\u00C3O");
+    draw_card(y, is_groq ? 110.0f : 66.0f, L"MOTOR DE TRANSCRI\u00C7\u00C3O");
     draw_dropdown(m_rc_cb_eng, utf8_to_wide(m_cfg.engine), HitId::EngineDropdown);
     if (is_groq) {
-        g.DrawString(L"API Key:", -1, &f_norm, rdp(30.0f, y + 76.0f, 78.0f, 32.0f), &sf_left, &br_sec);
+        g.DrawString(L"API Key:", -1, &f_norm, rdp(30.0f, y + 68.0f, 78.0f, 30.0f), &sf_left, &br_sec);
         Gdiplus::GraphicsPath ip;
         theme::add_round_rect_path(ip, sc(m_rc_key_box.X), sc(m_rc_key_box.Y), sc(m_rc_key_box.Width), sc(m_rc_key_box.Height), 8.0f * s);
         g.FillPath(&br_input, &ip);
         g.DrawPath(&pen_input, &ip);
         draw_pill_btn(m_rc_btn_eye, m_key_visible ? L"Ocultar" : L"Ver", HitId::EyeBtn);
     }
-    y += (is_groq ? 132.0f : 84.0f);
+    y += (is_groq ? 118.0f : 74.0f);
 
     // 4. Language card
-    draw_card(y, 74.0f, L"IDIOMA DA FALA");
+    draw_card(y, 66.0f, L"IDIOMA DA FALA");
     draw_dropdown(m_rc_cb_lang, lang_display(m_cfg.language), HitId::LangDropdown);
-    y += 84.0f;
+    y += 74.0f;
 
     // 5. Preferences & Appearance card
     {
         Gdiplus::GraphicsPath p;
-        theme::add_round_rect_path(p, 16.0f * s, y * s, 364.0f * s, 132.0f * s, 12.0f * s);
+        theme::add_round_rect_path(p, 16.0f * s, y * s, 364.0f * s, 178.0f * s, 12.0f * s);
         g.FillPath(&br_card, &p);
         g.DrawPath(&pen_card, &p);
 
-        auto draw_switch_row = [&](float row_y, const wchar_t* label, bool checked) {
+        auto draw_switch_row = [&](float row_y, const wchar_t* label, bool checked, bool dimmed = false) {
             g.DrawString(label, -1, &f_norm,
-                         rdp(30.0f, row_y, 260.0f, 34.0f), &sf_left, &br_txt);
-            float sw_x = 324.0f * s, sw_y = (row_y + 6.0f) * s, sw_w = 42.0f * s, sw_h = 22.0f * s;
+                         rdp(30.0f, row_y, 286.0f, 30.0f), &sf_left, dimmed ? &br_muted : &br_txt);
+            float sw_x = 324.0f * s, sw_y = (row_y + 4.0f) * s, sw_w = 42.0f * s, sw_h = 22.0f * s;
             Gdiplus::GraphicsPath swp;
             theme::add_round_rect_path(swp, sw_x, sw_y, sw_w, sw_h, 11.0f * s);
-            DWORD sw_col = checked ? pal.accent_green : pal.mic_idle_circle;
+            DWORD sw_col = checked ? (dimmed ? pal.border : pal.accent_green) : pal.mic_idle_circle;
             Gdiplus::SolidBrush sw_br(theme::gcol(sw_col));
             g.FillPath(&sw_br, &swp);
             float thumb_d = 16.0f * s;
@@ -411,15 +415,25 @@ void SettingsWindow::paint_window(HDC target_dc) {
             g.FillEllipse(&thumb_br, thumb_x, sw_y + 3.0f * s, thumb_d, thumb_d);
         };
 
-        draw_switch_row(y + 10.0f, L"Pontua\u00E7\u00E3o Autom\u00E1tica", m_cfg.auto_punctuation);
-        g.DrawLine(&pen_sep, 30.0f * s, (y + 47.0f) * s, 366.0f * s, (y + 47.0f) * s);
+        draw_switch_row(y + 6.0f, L"Pontua\u00E7\u00E3o Autom\u00E1tica", m_cfg.auto_punctuation);
+        g.DrawLine(&pen_sep, 30.0f * s, (y + 38.0f) * s, 366.0f * s, (y + 38.0f) * s);
 
-        draw_switch_row(y + 51.0f, L"Iniciar com o Windows", m_cfg.auto_start);
-        g.DrawLine(&pen_sep, 30.0f * s, (y + 88.0f) * s, 366.0f * s, (y + 88.0f) * s);
+        draw_switch_row(y + 40.0f, L"Permitir retic\u00EAncias (...)", m_cfg.allow_ellipsis);
+        g.DrawLine(&pen_sep, 30.0f * s, (y + 72.0f) * s, 366.0f * s, (y + 72.0f) * s);
+
+        bool groq_ready = is_groq && !m_cfg.groq_api_key.empty();
+        const wchar_t* rev_label = groq_ready
+            ? L"Revis\u00E3o Inteligente (Groq)"
+            : L"Revis\u00E3o IA (requer Groq + Key)";
+        draw_switch_row(y + 74.0f, rev_label, m_cfg.smart_review, !groq_ready);
+        g.DrawLine(&pen_sep, 30.0f * s, (y + 106.0f) * s, 366.0f * s, (y + 106.0f) * s);
+
+        draw_switch_row(y + 108.0f, L"Iniciar com o Windows", m_cfg.auto_start);
+        g.DrawLine(&pen_sep, 30.0f * s, (y + 140.0f) * s, 366.0f * s, (y + 140.0f) * s);
 
         // Theme selector buttons
         g.DrawString(L"Tema da Interface", -1, &f_norm,
-                     rdp(30.0f, y + 92.0f, 160.0f, 30.0f), &sf_left, &br_txt);
+                     rdp(30.0f, y + 143.0f, 160.0f, 30.0f), &sf_left, &br_txt);
         draw_pill_btn(m_rc_theme_dark, L"Escuro", HitId::ThemeDarkBtn, m_cfg.theme != "light");
         draw_pill_btn(m_rc_theme_light, L"Claro", HitId::ThemeLightBtn, m_cfg.theme == "light");
     }
@@ -755,6 +769,22 @@ LRESULT SettingsWindow::handle_msg(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 InvalidateRect(hwnd, nullptr, FALSE);
                 return 0;
             }
+            if (h == HitId::EllipsisToggle) {
+                AppSettings old_cfg = m_cfg;
+                m_cfg.allow_ellipsis = !m_cfg.allow_ellipsis;
+                LOGI("[OK] Permitir reticencias (...): %s", m_cfg.allow_ellipsis ? "Ativado" : "Desativado");
+                commit_and_notify(old_cfg);
+                InvalidateRect(hwnd, nullptr, FALSE);
+                return 0;
+            }
+            if (h == HitId::ReviewToggle) {
+                AppSettings old_cfg = m_cfg;
+                m_cfg.smart_review = !m_cfg.smart_review;
+                LOGI("[OK] Revisao Inteligente (Groq): %s", m_cfg.smart_review ? "Ativado" : "Desativado");
+                commit_and_notify(old_cfg);
+                InvalidateRect(hwnd, nullptr, FALSE);
+                return 0;
+            }
             if (h == HitId::AutoStartToggle) {
                 AppSettings old_cfg = m_cfg;
                 m_cfg.auto_start = !m_cfg.auto_start;
@@ -801,6 +831,7 @@ LRESULT SettingsWindow::handle_msg(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                         AppSettings old_cfg = m_cfg;
                         m_cfg.groq_api_key = new_key;
                         commit_and_notify(old_cfg);
+                        InvalidateRect(hwnd, nullptr, FALSE);
                     }
                 }
                 return 0;

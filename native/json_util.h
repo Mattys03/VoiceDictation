@@ -263,6 +263,10 @@ inline AppSettings parse_settings_json(const std::string& json_body) {
                 else cfg.microphone_index = atoi(tok.c_str());
             } else if (key == "auto_punctuation") {
                 cfg.auto_punctuation = (tok == "true");
+            } else if (key == "allow_ellipsis") {
+                cfg.allow_ellipsis = (tok == "true");
+            } else if (key == "smart_review") {
+                cfg.smart_review = (tok == "true");
             } else if (key == "auto_start") {
                 cfg.auto_start = (tok == "true");
                 cfg.has_auto_start_pref = true;
@@ -285,6 +289,8 @@ inline std::string serialize_settings_json(const AppSettings& cfg) {
     out += "  \"microphone_name\": " + escape_json_string(cfg.microphone_name) + ",\n";
     out += "  \"language\": " + escape_json_string(cfg.language) + ",\n";
     out += std::string("  \"auto_punctuation\": ") + (cfg.auto_punctuation ? "true" : "false") + ",\n";
+    out += std::string("  \"allow_ellipsis\": ") + (cfg.allow_ellipsis ? "true" : "false") + ",\n";
+    out += std::string("  \"smart_review\": ") + (cfg.smart_review ? "true" : "false") + ",\n";
     out += "  \"engine\": " + escape_json_string(cfg.engine) + ",\n";
     out += "  \"groq_api_key\": " + escape_json_string(cfg.groq_api_key) + ",\n";
     out += "  \"theme\": " + escape_json_string(cfg.theme == "light" ? "light" : "dark") + ",\n";
